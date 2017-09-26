@@ -417,10 +417,8 @@ sub MAIN {
 		$record->add_field($_996);
 	}
 	
-	use File::Slurp;
-	write_file('A_RES_71_327.mrk',$record->to_mrk);
-	write_file('A_RES_71_327.xml',$record->to_xml);
-	write_file('A_RES_71_327.mrc',$record->to_marc21);
+	open my $out,'>',$opts->{i}.'mrc';
+	print {$out} $record->to_marc21;
 }
 
 END {}
