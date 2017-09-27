@@ -328,7 +328,7 @@ sub MAIN {
 			$symbol = uc $symbol;
 			$record->add_field(MARC::Field->new(tag => '791')->set_sub('a',$symbol)->set_sub('b',join '/', (split '/',$symbol)[0,2]));
 		}
-		next;
+		#next;
 		my $hzn = Get::Hzn::Dump::Bib->new;
 		say 'Searching Horizon for title and agenda information';
 		$hzn->iterate (
@@ -351,7 +351,7 @@ sub MAIN {
 	
 	DEFAULTS: {
 		my $date = $record->get_values('269','a');
-		$record->add_field(MARC::Field->new(tag => '245')->set_sub('a','title'));
+		$record->add_field(MARC::Field->new(tag => '245')->set_sub('a','title')) unless $record->has_tag('245');
 		$record->add_field(MARC::Field->new(tag => '039')->set_sub('a','VOT'));
 		$record->add_field(MARC::Field->new(tag => '040')->set_sub('a','NNUN'));
 		$record->add_field(MARC::Field->new(tag => '089')->set_sub('a','Voting record')->set_sub('b','B23'));
