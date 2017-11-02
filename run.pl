@@ -242,7 +242,7 @@ sub text {
 	die "pdf not found" if ! -e $file;
 	unlink "temp.txt" if -e "temp.txt";
 	$file = qq/"$file"/;
-	system "pdftotext -layout -enc UTF-8 $file temp.txt";
+	system "s:/Bin_new/pdftotext -layout -enc UTF-8 $file temp.txt";
 	my $text = read_file("temp.txt") || die;
 	$self->{text} = $text;
 }
@@ -417,7 +417,7 @@ sub MAIN {
 		$record->add_field($_996);
 	}
 	
-	open my $out,'>',$opts->{i}.'mrc';
+	open my $out,'>',$opts->{i}.'.mrc';
 	print {$out} $record->to_marc21;
 }
 
