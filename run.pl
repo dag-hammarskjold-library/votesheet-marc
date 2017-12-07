@@ -383,21 +383,24 @@ sub convert {
 			952 => ['','a','***MEETING***'],
 			791 => ['','a','***SYMBOL***'],
 			269 => ['','a','***DATE***'],
+			245 => ['','a','***TITLE***']
 		);
 		for my $tag (keys %check) {
 			next if $record->has_tag($tag);
 			my ($inds,$sub,$val) = @{$check{$tag}};
 			$record->add_field(MARC::Field->new(tag => $tag)->set_sub($sub,$val));
 		}
-	
-		my $date = $record->get_values('269','a');
-		$record->add_field(MARC::Field->new(tag => '245')->set_sub('a','***TITLE***')) unless $record->has_tag('245');
+		if (my $field = $record->get_field('245')) {
+			my $sub_a = $field->get_sub('a').':';
+			$field->set_sub('a',$sub_a)->set_sub('b','resolution /')->set_sub('c','adopted by the General Assembly');
+		}
 		$record->add_field(MARC::Field->new(tag => '039')->set_sub('a','VOT'));
 		$record->add_field(MARC::Field->new(tag => '040')->set_sub('a','NNUN'));
 		$record->add_field(MARC::Field->new(tag => '089')->set_sub('a','Voting record')->set_sub('b','B23'));
 		$record->add_field(MARC::Field->new(tag => '591')->set_sub('a','RECORDED - No machine generated vote'));
 		$record->add_field(MARC::Field->new(tag => '793')->set_sub('a','PLENARY MEETING'));
 		$record->add_field(MARC::Field->new(tag => '930')->set_sub('a','VOT'));
+		my $date = $record->get_values('269','a');
 		$record->add_field(MARC::Field->new(tag => '992')->set_sub('a',$date));
 		$record->date_entered_on_file(substr $date,2);
 		$record->date_1(substr $date,0,4);
