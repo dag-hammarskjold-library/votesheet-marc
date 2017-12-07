@@ -240,11 +240,9 @@ sub text {
 	my $file = $self->{params}->{file};
 	return $self->{text} if $self->{text};
 	die "pdf not found" if ! -e $file;
-	unlink "temp.txt" if -e "temp.txt";
+	chmod 0777, $file; 
 	$file = qq/"$file"/;
-	system "s:/Bin_new/pdftotext -layout -enc UTF-8 $file temp.txt";
-	my $text = read_file("temp.txt") || die;
-	$self->{text} = $text;
+	$self->{text} = qx|s:/Bin_new/pdftotext -layout -enc UTF-8 $file -|;
 }
 
 sub chunks {
@@ -261,7 +259,7 @@ package main;
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 use Getopt::Std;
-use List::Util qw/sum/;
+use List::Util qw/sum first/;
 use MARC;
 use Get::Hzn;
 
@@ -274,13 +272,13 @@ RUN: {
 sub options {
 	my @opts = (
 		['h' => 'help'],
-		['i:' => 'input file (path)']
+		#['i:' => 'input file (path)']
 	);
 	getopts (join('',map {$_->[0]} @opts), \my %opts);
-	if (! %opts || $opts{h}) {
-		say join ' - ', @$_ for @opts;
-		exit; 
-	}
+	#if (! %opts || $opts{h}) {
+	#	say join ' - ', @$_ for @opts;
+	#	exit; 
+	#}
 	$opts{$_} || die "required opt $_ missing\n" for qw||;
 	-e $opts{$_} || die qq|"$opts{$_}" is an invalid path\n| for qw||;
 	return \%opts;
@@ -289,37 +287,68 @@ sub options {
 sub MAIN {
 	my $opts = shift;
 	
-	my $pdf = PDF::Text->new(file => $opts->{i});
+	open my $mrk,'>','results_'.time.'.mrk';
+	
+	my $dir = 'pending';
+	#my $dir = '.';
+	opendir(my $dh, $dir);
+	convert("$dir/$_",$mrk) for grep {/\.pdf$/} readdir $dh;
+}
+
+sub convert {
+	my ($in,$mrk) = @_;
+	
+	say '> '.$in;
+	
+	my $pdf = PDF::Text->new(file => $in);
 	my $members = Members->new;
 	my $record = MARC::Record->new;
+	my $chunks = $pdf->chunks;
+	my (@name,$session);
 	
-	INFO: {
-		for my $chunk (@{$pdf->chunks}) {
-			# draft
-			if ($chunk =~ /(A\/(\d+)[^\s]+)/) {
-				$record->add_field(MARC::Field->new(tag => '993', inds => '2 ')->set_sub('a',$1));
-				my $session = $2;
-			}
-			# meeting
-			if ($chunk =~ /(\d+)[snrt][tdh] Plenary/) {
-				$record->add_field(MARC::Field->new(tag => '952')->set_sub('a',$1))
-			}
-			# resolution
-			if ($chunk =~ /Resolution (\d+)\/(\d+)/) {
-				$record->add_field(MARC::Field->new(tag => '791')->set_sub('a',$1));
-			}
-			# date
-			if ($chunk =~ /Vote Time: ([^\s]+)/) {
-				my $date = $1;
-				my @parts = split '/', $date;
-				$_ = sprintf '%02d', $_ for @parts;
-				$record->add_field(MARC::Field->new(tag => '269')->set_sub('a',join '', @parts[2,0,1]));
-			}
+	DRAFT: {
+		my $rx = qr/(A\/(\d+)\/(L?)[^\s]+)/;
+		my $chunk = first {/$rx/} @$chunks or next;
+		$chunk =~ $rx;
+		$session = $2;
+		my $inds = $3 ? '2 ' : '3 ';
+		$record->add_field(MARC::Field->new(tag => '993', inds => $inds)->set_sub('a',$1));
+	}
+	
+	MEETING: {
+		my $rx = qr/(\d+)[snrt][tdh] Plenary/;
+		my $chunk = first {/$rx/} @$chunks or next;
+		$chunk =~ $rx;
+		$record->add_field(MARC::Field->new(tag => '952')->set_sub('a','A/'.$session.'/PV.'.$1));
+	}
+	
+	RESOLUTION: {
+		my $rx = qr/Resolution (\d+)\/(\d+)/;
+		my $chunk = first {/$rx/} @$chunks or next; 
+		$chunk =~ $rx;
+		$record->add_field(MARC::Field->new(tag => '791')->set_sub('a',$1));
+	}
+	
+	DATE: {
+		my $rx = qr/Vote Time: ([^\s]+)/;
+		my $chunk = first {/$rx/} @$chunks or next;
+		$chunk =~ $rx;
+		my $date = $1;
+		my @parts = split '/', $date;
+		$_ = sprintf '%02d', $_ for @parts;
+		$record->add_field(MARC::Field->new(tag => '269')->set_sub('a',join '', @parts[2,0,1]));
+	}
+	
+	TITLE: { 
+		for (@$chunks) {
+			my $i;
+			push @name, $_ if ($i = /Vote Name/ .. /(Yes|No|Abstain)/) && $i > 1 && substr($i,-2) ne 'E0';
 		}
+		$record->add_field(MARC::Field->new(tag => '245')->set_sub('a',join ' ', @name));
 	}
 	
 	FROM_HZN: {
-		#next;
+		last;
 		my $symbol;
 		unless ($record->has_field('791')) {
 			print "Resolution symbol was not detected. Please enter manually: ";
@@ -328,7 +357,6 @@ sub MAIN {
 			$symbol = uc $symbol;
 			$record->add_field(MARC::Field->new(tag => '791')->set_sub('a',$symbol)->set_sub('b',join '/', (split '/',$symbol)[0,2]));
 		}
-		#next;
 		my $hzn = Get::Hzn::Dump::Bib->new;
 		say 'Searching Horizon for title and agenda information';
 		$hzn->iterate (
@@ -350,8 +378,20 @@ sub MAIN {
 	}
 	
 	DEFAULTS: {
+		my %check = (
+			993 => ['2 ','a','***DRAFT***'],
+			952 => ['','a','***MEETING***'],
+			791 => ['','a','***SYMBOL***'],
+			269 => ['','a','***DATE***'],
+		);
+		for my $tag (keys %check) {
+			next if $record->has_tag($tag);
+			my ($inds,$sub,$val) = @{$check{$tag}};
+			$record->add_field(MARC::Field->new(tag => $tag)->set_sub($sub,$val));
+		}
+	
 		my $date = $record->get_values('269','a');
-		$record->add_field(MARC::Field->new(tag => '245')->set_sub('a','title')) unless $record->has_tag('245');
+		$record->add_field(MARC::Field->new(tag => '245')->set_sub('a','***TITLE***')) unless $record->has_tag('245');
 		$record->add_field(MARC::Field->new(tag => '039')->set_sub('a','VOT'));
 		$record->add_field(MARC::Field->new(tag => '040')->set_sub('a','NNUN'));
 		$record->add_field(MARC::Field->new(tag => '089')->set_sub('a','Voting record')->set_sub('b','B23'));
@@ -417,8 +457,8 @@ sub MAIN {
 		$record->add_field($_996);
 	}
 	
-	open my $out,'>',$opts->{i}.'.mrc';
-	print {$out} $record->to_marc21;
+	#open my $out,'>',$opts->{i}.'.mrc';
+	print {$mrk} $record->to_mrk;
 }
 
 END {}
