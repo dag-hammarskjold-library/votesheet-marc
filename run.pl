@@ -248,11 +248,8 @@ sub text {
 sub chunks {
 	my $self = shift;
 	return $self->{chunks} if $self->{chunks};;
-	my $text = $self->text;
-	my @split = split( /\s{2,}|\n/, $text );
-	s/\s+$// for @split;
+	my @split = map {s/\s+$//} split(/\s{2,}|\n/, $self->text);
 	$self->{chunks} = \@split;
-	return $self->{chunks};
 }
 
 package main;
@@ -287,9 +284,11 @@ sub options {
 sub MAIN {
 	my $opts = shift;
 	
+	say 'ok';
+	
 	open my $mrk,'>','results_'.time.'.mrk';
 	
-	my $dir = 'pending';
+	my $dir = $ARGV[0] ? $ARGV[0] : 'pending';
 	#my $dir = '.';
 	opendir(my $dh, $dir);
 	convert("$dir/$_",$mrk) for grep {/\.pdf$/} readdir $dh;
@@ -319,7 +318,8 @@ sub convert {
 		my $rx = qr/(\d+)[snrt][tdh] Plenary/;
 		my $chunk = first {/$rx/} @$chunks or next;
 		$chunk =~ $rx;
-		$record->add_field(MARC::Field->new(tag => '952')->set_sub('a','A/'.$session.'/PV.'.$1));
+		my $sym = 'A/'.$session.'/PV.'.$1;
+		$record->add_field(MARC::Field->new(tag => '952')->set_sub('a',$sym));
 	}
 	
 	RESOLUTION: {
@@ -347,36 +347,6 @@ sub convert {
 		$record->add_field(MARC::Field->new(tag => '245')->set_sub('a',join ' ', @name));
 	}
 	
-	FROM_HZN: {
-		last;
-		my $symbol;
-		unless ($record->has_field('791')) {
-			print "Resolution symbol was not detected. Please enter manually: ";
-			$symbol = <STDIN>;
-			chomp $symbol;
-			$symbol = uc $symbol;
-			$record->add_field(MARC::Field->new(tag => '791')->set_sub('a',$symbol)->set_sub('b',join '/', (split '/',$symbol)[0,2]));
-		}
-		my $hzn = Get::Hzn::Dump::Bib->new;
-		say 'Searching Horizon for title and agenda information';
-		$hzn->iterate (
-			encoding => 'utf8',
-			criteria => qq|select bib# from bib where tag = "191" and text like "\x{1F}a$symbol\x{1F}%"|,
-			callback => sub {
-				my $r = shift;
-				for (245,991) {
-					my $field = $r->get_field($_);
-					$field->delete_subfield('z');
-					$record->add_field($field);
-				}
-			}
-		);
-		unless ($hzn->results) {
-			say "Resolution not found in Horizon. Skipping 245 and 991";
-		} 
-		
-	}
-	
 	DEFAULTS: {
 		my %check = (
 			993 => ['2 ','a','***DRAFT***'],
@@ -391,20 +361,41 @@ sub convert {
 			$record->add_field(MARC::Field->new(tag => $tag)->set_sub($sub,$val));
 		}
 		if (my $field = $record->get_field('245')) {
-			my $sub_a = $field->get_sub('a').':';
-			$field->set_sub('a',$sub_a)->set_sub('b','resolution /')->set_sub('c','adopted by the General Assembly');
+			my $sub_a = $field->get_sub('a');
+			$field->set_sub('a',$sub_a.' :', replace => 1)->set_sub('b','resolution /')->set_sub('c','adopted by the General Assembly');
 		}
 		$record->add_field(MARC::Field->new(tag => '039')->set_sub('a','VOT'));
 		$record->add_field(MARC::Field->new(tag => '040')->set_sub('a','NNUN'));
 		$record->add_field(MARC::Field->new(tag => '089')->set_sub('a','Voting record')->set_sub('b','B23'));
 		$record->add_field(MARC::Field->new(tag => '591')->set_sub('a','RECORDED - No machine generated vote'));
+		if (my $field = $record->get_field('791')) {
+			$field->set_sub('b','A/')->set_sub('c',$session);
+		}
 		$record->add_field(MARC::Field->new(tag => '793')->set_sub('a','PLENARY MEETING'));
 		$record->add_field(MARC::Field->new(tag => '930')->set_sub('a','VOT'));
 		my $date = $record->get_values('269','a');
 		$record->add_field(MARC::Field->new(tag => '992')->set_sub('a',$date));
+		# 000
+		$record->record_status('n');
+		$record->type_of_record('a');
+		$record->bibliographic_level('m');
+		$record->encoding_level('#');
+		$record->descriptive_cataloging_form('a');
+		$record->multipart_resource_record_level(' ');
+		# 008
 		$record->date_entered_on_file(substr $date,2);
 		$record->date_1(substr $date,0,4);
-		$record->encoding_level('a');
+		$record->date_2(' ' x 4);
+		$record->place_of_publication_production_or_execution('usa');
+		$record->illustrations(' ' x 4);
+		$record->nature_of_contents(' ' x 4);
+		$record->target_audience('#');
+		$record->form_of_item('r');
+		$record->government_publication(' ');
+		$record->biography(' ');
+		$record->language('eng');
+		$record->modified_record(' ');
+		$record->type_of_date_publication_status('s');
 		$record->cataloging_source('d');
 	}
 		
@@ -451,6 +442,7 @@ sub convert {
 	}
 	
 	RESULTS : {
+		$results{$_} //= '0' for qw|Y N A X|;
 		my $_996 = MARC::Field->new(tag => '996');
 		$_996->set_sub('b',$results{Y});
 		$_996->set_sub('c',$results{N});
@@ -460,7 +452,6 @@ sub convert {
 		$record->add_field($_996);
 	}
 	
-	#open my $out,'>',$opts->{i}.'.mrc';
 	print {$mrk} $record->to_mrk;
 }
 
