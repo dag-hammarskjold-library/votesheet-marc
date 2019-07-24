@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use feature qw|say|;
+use Cwd;
 use lib '../modules';
 
 package Class;
@@ -182,13 +183,15 @@ use constant MEMBERS => {
 	'SRI LANKA' => 'LKA',
 	'SUDAN' => 'SDN',
 	'SURINAME' => 'SUR',
-	'SWAZILAND' => 'SWZ',
+	#'SWAZILAND' => 'SWZ',
+	'ESWATINI' => 'SWZ',
 	'SWEDEN' => 'SWE',
 	'SWITZERLAND' => 'CHE',
 	'SYRIAN ARAB REPUBLIC' => 'SYR',
 	'TAJIKISTAN' => 'TJK',
 	'THAILAND' => 'THA',
-	'THE FORMER YUGOSLAV REPUBLIC OF MACEDONIA' => 'MKD',
+	#'THE FORMER YUGOSLAV REPUBLIC OF MACEDONIA' => 'MKD',
+	'NORTH MACEDONIA' => 'MKD',
 	'TIMOR-LESTE' => 'TLS',
 	'TOGO' => 'TGO',
 	'TONGA' => 'TON',
@@ -206,11 +209,17 @@ use constant MEMBERS => {
 	'URUGUAY' => 'URY',
 	'UZBEKISTAN' => 'UZB',
 	'VANUATU' => 'VUT',
-	'VENEZUELA (BOLIVARIAN REPUBLIC OF)' => 'VEN',
+	'VENEZUELA' => 'VEN',
 	'VIET NAM' => 'VNM',
 	'YEMEN' => 'YEM',
 	'ZAMBIA' => 'ZMB',
 	'ZIMBABWE' => 'ZWE'
+};
+
+# use thes map between names as they appear on the sheet to how they should appear in Horizon
+use constant TO_HZN => {
+	'CZECH REPUBLIC' => 'CZECHIA',
+	'VENEZUELA' => 'VENEZUELA (BOLIVARIAN REPUBLIC OF)',
 };
 
 sub ids {
@@ -230,6 +239,11 @@ sub codes {
 	return &MEMBERS;
 }
 
+sub hzn_name {
+	my ($self,$name) = @_;
+	return TO_HZN->{$name};
+}
+
 
 package PDF::Text;
 use base 'Class';
@@ -247,8 +261,8 @@ sub text {
 
 sub chunks {
 	my $self = shift;
-	return $self->{chunks} if $self->{chunks};;
-	my @split = map {s/\s+$//} split(/\s{2,}|\n/, $self->text);
+	return $self->{chunks} if $self->{chunks};
+	my @split = map {s/\s+$//r} split(/\s{2,}|\n/, $self->text);
 	$self->{chunks} = \@split;
 }
 
@@ -256,7 +270,12 @@ package main;
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 use Getopt::Std;
-use List::Util qw/sum first/;
+use Cwd;
+use List::Util qw/sum first none/;
+use Time::Piece;
+
+use Win32::GUI;
+
 use MARC;
 use Get::Hzn;
 
@@ -269,7 +288,7 @@ RUN: {
 sub options {
 	my @opts = (
 		['h' => 'help'],
-		#['i:' => 'input file (path)']
+		['i:' => 'input file (path)']
 	);
 	getopts (join('',map {$_->[0]} @opts), \my %opts);
 	#if (! %opts || $opts{h}) {
@@ -283,27 +302,63 @@ sub options {
 
 sub MAIN {
 	my $opts = shift;
+		
+	my @fns;
 	
-	say 'ok';
+	my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
 	
-	open my $mrk,'>','results_'.time.'.mrk';
+	if (@chosen == 1) {
+		unless ($chosen[0]) {
+			die "No files chosen\n";
+		}
+		push @fns, shift @chosen;
+	} elsif (@chosen > 1) {
+		my $dir = shift @chosen;
+		push @fns, $_ for map {$dir."/$_"} @chosen;
+	} 
 	
-	my $dir = $ARGV[0] ? $ARGV[0] : 'pending';
-	#my $dir = '.';
-	opendir(my $dh, $dir);
-	convert("$dir/$_",$mrk) for grep {/\.pdf$/} readdir $dh;
+	my $lt = localtime;
+	#my $ofn = $lt->ymd().'@'.$lt->hms('-').'.mrc';
+	my $ofn = 'results/'.join('-', sort map {s/[^\w]/_/gr} map {s/.*\\(.*)\.pdf/$1/r} @fns).'.mrc';
+	
+	if (! -e 'results') {
+		mkdir 'results' or die $!;
+	}
+	open my $out, '>', $ofn or die $!;
+	
+	my @resos;
+	
+	FILES: while (my $file = shift @fns) {
+		say qq|\nOK. processing "$file"\n|;
+		system qq|start "C:\\Program Files (x86)\\Google\\Chrome\\Application" "$file"|;
+	
+		print "Please enter the resolution symbol: ";
+		my $symbol = <STDIN>;
+		chomp $symbol;
+		
+		convert($file,$symbol,$out);
+		
+		if (@fns > 0) {
+			say scalar(@fns).' files remaining. press Enter to continue or Q to quit.';
+			my $a = <STDIN>;
+			last FILES if $a =~ /^[Qq]/;
+		}
+	}
+	
+	system qq{echo $ofn | clip};
+	say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
 }
 
 sub convert {
-	my ($in,$mrk) = @_;
-	
-	say '> '.$in;
+	my ($in,$symbol,$mrc) = @_;
 	
 	my $pdf = PDF::Text->new(file => $in);
 	my $members = Members->new;
 	my $record = MARC::Record->new;
 	my $chunks = $pdf->chunks;
 	my (@name,$session);
+	
+	$record->add_field(MARC::Field->new(tag => '791')->set_sub('a',$symbol));
 	
 	DRAFT: {
 		my $rx = qr/(A\/(\d+)\/(L?)[^\s]+)/;
@@ -315,7 +370,7 @@ sub convert {
 	}
 	
 	MEETING: {
-		my $rx = qr/(\d+)[snrt][tdh] Plenary/;
+		my $rx = qr/(\d+)[snrt][tdh] Plenary/i;
 		my $chunk = first {/$rx/} @$chunks or next;
 		$chunk =~ $rx;
 		my $sym = 'A/'.$session.'/PV.'.$1;
@@ -330,7 +385,7 @@ sub convert {
 	}
 	
 	DATE: {
-		my $rx = qr/Vote Time: ([^\s]+)/;
+		my $rx = qr/Vote Time: ([^\s]+)/; 
 		my $chunk = first {/$rx/} @$chunks or next;
 		$chunk =~ $rx;
 		my $date = $1;
@@ -349,20 +404,17 @@ sub convert {
 	
 	DEFAULTS: {
 		my %check = (
-			993 => ['2 ','a','***DRAFT***'],
-			952 => ['','a','***MEETING***'],
-			791 => ['','a','***SYMBOL***'],
-			269 => ['','a','***DATE***'],
-			245 => ['','a','***TITLE***']
+			791 => ['','a','RESOLUTION SYMBOL'],
+			993 => ['2 ','a','DRAFT SYMBOL'],
+			952 => ['','a','MEETING SYMBOL'],
+			269 => ['','a','DATE'],
+			245 => ['','a','TITLE']
 		);
 		for my $tag (keys %check) {
 			next if $record->has_tag($tag);
-			my ($inds,$sub,$val) = @{$check{$tag}};
-			$record->add_field(MARC::Field->new(tag => $tag)->set_sub($sub,$val));
-		}
-		if (my $field = $record->get_field('245')) {
-			my $sub_a = $field->get_sub('a');
-			$field->set_sub('a',$sub_a.' :', replace => 1)->set_sub('b','resolution /')->set_sub('c','adopted by the General Assembly');
+			my ($inds,$sub,$field) = @{$check{$tag}};
+			warn "> $field not found\n";
+			die "The resolution symbol is required\n" if $tag eq "791";
 		}
 		$record->add_field(MARC::Field->new(tag => '039')->set_sub('a','VOT'));
 		$record->add_field(MARC::Field->new(tag => '040')->set_sub('a','NNUN'));
@@ -373,7 +425,7 @@ sub convert {
 		}
 		$record->add_field(MARC::Field->new(tag => '793')->set_sub('a','PLENARY MEETING'));
 		$record->add_field(MARC::Field->new(tag => '930')->set_sub('a','VOT'));
-		my $date = $record->get_values('269','a');
+		my $date = first {$_} $record->get_values('269','a');
 		$record->add_field(MARC::Field->new(tag => '992')->set_sub('a',$date));
 		# 000
 		$record->record_status('n');
@@ -398,19 +450,20 @@ sub convert {
 		$record->type_of_date_publication_status('s');
 		$record->cataloging_source('d');
 	}
-		
+	
 	my %results;
 	VOTES: {
 		my (%seen,$memcount);
 		CHUNKS: for my $chunk (sort {$a =~ s/[YNA] //r cmp $b =~ s/[YNA] //r} @{$pdf->chunks}) {
-			my $vote;
+			my ($vote,$text);
 			if ($chunk =~ /^([YNA]) /) {
 				$vote = $1;
-				$chunk = substr $chunk,2;
+				$text = substr $chunk,2;
 			} else {
 				$vote = 'X';
+				$text = $chunk;
 			}
-			my $id = substr $chunk,0,14;
+			my $id = substr $text,0,14;
 			my $member = $members->ids->{$id};		
 			if ($member) {
 				{
@@ -432,13 +485,21 @@ sub convert {
 				$field->set_sub('a',$memcount);
 				$field->set_sub('c',$members->codes->{$member});
 				$field->set_sub('d',$vote) unless $vote eq 'X';
-				$field->set_sub('e',$member);
+				$field->set_sub('e',$members->hzn_name($member) // $member);
 				$record->add_field($field);
 				$results{$vote}++;
+				
 			} else {
 				#say $chunk;
 			}
 		}	
+		my @unseen;
+		for my $mem (sort values %{$members->ids}) {
+			push @unseen, $mem if none {$_ eq $mem} keys %seen;
+		}
+		if (@unseen) {
+			die join "\n", 'Did not find:', @unseen, 'The name on the voting sheet may have changed. Please inform the script maintainer.';
+		}
 	}
 	
 	RESULTS : {
@@ -452,7 +513,21 @@ sub convert {
 		$record->add_field($_996);
 	}
 	
-	print {$mrk} $record->to_mrk;
+	print {$mrc} $record->to_marc21;
+	say $record->to_mrk;
+}
+
+sub clean_fn {
+	# scrub unstable filename characters 
+	my $fn = shift;
+
+	$fn =~ s/\//_/g;
+	$fn =~ s/\s//g;
+	$fn =~ tr/[];/^^&/;
+	
+	say $fn;
+	
+	return $fn;
 }
 
 END {}
