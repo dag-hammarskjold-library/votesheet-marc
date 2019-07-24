@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use feature qw|say|;
 use Cwd;
-use lib '../modules';
+use lib 'lib';
 
 package Class;
 use Data::Dumper;
@@ -273,11 +273,8 @@ use Getopt::Std;
 use Cwd;
 use List::Util qw/sum first none/;
 use Time::Piece;
-
 use Win32::GUI;
-
 use MARC;
-use Get::Hzn;
 
 INIT {}
 
