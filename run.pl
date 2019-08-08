@@ -3,8 +3,9 @@
 use strict;
 use warnings;
 use feature qw|say|;
-use Cwd;
-use lib 'lib';
+
+use FindBin;
+use lib "$FindBin::Bin/lib";
 
 package Class;
 use Data::Dumper;
@@ -247,7 +248,7 @@ sub hzn_name {
 
 package PDF::Text;
 use base 'Class';
-use File::Slurp;
+use PDF::API2;
 
 sub text {
 	my $self = shift;
@@ -256,7 +257,8 @@ sub text {
 	die "pdf not found" if ! -e $file;
 	chmod 0777, $file; 
 	$file = qq/"$file"/;
-	$self->{text} = qx|s:/Bin_new/pdftotext -layout -enc UTF-8 $file -|;
+	$self->{text} = qx|s:/Bin_new/pdftotext -layout -enc UTF-8 $file -| or die qq|Check connection to the S: drive (access to executable "S:\\Bin_new\\pdftotext.exe" is required)\n|;
+	return $self->{text};
 }
 
 sub chunks {
@@ -270,7 +272,6 @@ package main;
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 use Getopt::Std;
-use Cwd;
 use List::Util qw/sum first none uniq/;
 use Time::Piece;
 use Win32::GUI;
