@@ -271,7 +271,7 @@ use Data::Dumper;
 $Data::Dumper::Indent = 1;
 use Getopt::Std;
 use Cwd;
-use List::Util qw/sum first none/;
+use List::Util qw/sum first none uniq/;
 use Time::Piece;
 use Win32::GUI;
 use MARC;
@@ -300,32 +300,37 @@ sub options {
 sub MAIN {
 	my $opts = shift;
 		
-	my @fns;
-	
 	my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
 	
+	my @paths;
 	if (@chosen == 1) {
 		unless ($chosen[0]) {
 			die "No files chosen\n";
 		}
-		push @fns, shift @chosen;
+		push @paths, shift @chosen;
 	} elsif (@chosen > 1) {
 		my $dir = shift @chosen;
-		push @fns, $_ for map {$dir."/$_"} @chosen;
+		push @paths, $_ for map {$dir."/$_"} @chosen;
 	} 
 	
-	my $lt = localtime;
-	#my $ofn = $lt->ymd().'@'.$lt->hms('-').'.mrc';
-	my $ofn = 'results/'.join('-', sort map {s/[^\w]/_/gr} map {s/.*\\(.*)\.pdf/$1/r} @fns).'.mrc';
-	
-	if (! -e 'results') {
-		mkdir 'results' or die $!;
+	my ($ofn,$ofh);
+	IO: {
+		my @fns = 
+			sort 
+			map {s/[^\w]/_/gr} 
+			map {s/.*\\(.*)\.pdf/$1/r} 
+			map {/([^\/]+)$/} 
+		@paths;
+		@fns = @fns[0,-1] unless @fns == 1;
+		$ofn = 'results/'.join('...',@fns).'.mrc';
+		
+		if (! -e 'results') {
+			mkdir 'results' or die $!;
+		}
+		open $ofh, '>', $ofn or die $!;
 	}
-	open my $out, '>', $ofn or die $!;
 	
-	my @resos;
-	
-	FILES: while (my $file = shift @fns) {
+	FILES: while (my $file = shift @paths) {
 		say qq|\nOK. processing "$file"\n|;
 		#system qq|start "C:\\Program Files (x86)\\Google\\Chrome\\Application" "$file"|;
 	
@@ -333,10 +338,10 @@ sub MAIN {
 		my $symbol = <STDIN>;
 		chomp $symbol;
 		
-		convert($file,$symbol,$out);
+		convert($file,$symbol,$ofh);
 		
-		if (@fns > 0) {
-			say scalar(@fns).' files remaining. press Enter to continue or Q to quit.';
+		if (@paths > 0) {
+			say scalar(@paths).' files remaining. press Enter to continue or Q to quit.';
 			my $a = <STDIN>;
 			last FILES if $a =~ /^[Qq]/;
 		}
@@ -347,7 +352,7 @@ sub MAIN {
 }
 
 sub convert {
-	my ($in,$symbol,$mrc) = @_;
+	my ($in,$symbol,$ofh) = @_;
 	
 	my $pdf = PDF::Text->new(file => $in);
 	my $members = Members->new;
@@ -510,7 +515,7 @@ sub convert {
 		$record->add_field($_996);
 	}
 	
-	print {$mrc} $record->to_marc21;
+	print {$ofh} $record->to_marc21;
 	say $record->to_mrk;
 }
 
