@@ -327,7 +327,7 @@ sub MAIN {
 	
 	FILES: while (my $file = shift @fns) {
 		say qq|\nOK. processing "$file"\n|;
-		system qq|start "C:\\Program Files (x86)\\Google\\Chrome\\Application" "$file"|;
+		#system qq|start "C:\\Program Files (x86)\\Google\\Chrome\\Application" "$file"|;
 	
 		print "Please enter the resolution symbol: ";
 		my $symbol = <STDIN>;
