@@ -2,6 +2,8 @@
 Convert vote result PDF to MARC.
 
 #### Usage:
+It's a good idea to run `git pull` before using, to make sure you have the latest source code.
+
 > `perl run.pl`
 
 #### Requirements:
