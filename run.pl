@@ -248,7 +248,7 @@ sub hzn_name {
 
 package PDF::Text;
 use base 'Class';
-use PDF::API2;
+#use PDF::API2;
 
 sub text {
 	my $self = shift;
@@ -274,6 +274,7 @@ $Data::Dumper::Indent = 1;
 use Getopt::Std;
 use List::Util qw/sum first none uniq/;
 use Time::Piece;
+use Cwd;
 use Win32::GUI;
 use MARC;
 
@@ -347,6 +348,8 @@ sub MAIN {
 			last FILES if $a =~ /^[Qq]/;
 		}
 	}
+	
+	$ofn = join('/',getcwd(),$ofn) =~ s|/|\\|gr;
 	
 	system qq{echo $ofn | clip};
 	say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
