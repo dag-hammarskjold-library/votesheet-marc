@@ -257,7 +257,8 @@ sub text {
 	die "pdf not found" if ! -e $file;
 	chmod 0777, $file; 
 	$file = qq/"$file"/;
-	$self->{text} = qx|s:/Bin_new/pdftotext -layout -enc UTF-8 $file -| or die qq|Check connection to the S: drive (access to executable "S:\\Bin_new\\pdftotext.exe" is required)\n|;
+	$self->{text} = qx|s:/Bin_new/pdftotext -layout -enc UTF-8 $file -| 
+		or die qq|Check connection to the S: drive (access to executable "S:\\Bin_new\\pdftotext.exe" is required)\n|;
 	return $self->{text};
 }
 
