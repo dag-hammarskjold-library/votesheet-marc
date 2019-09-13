@@ -9,5 +9,5 @@ It's a good idea to run `git pull` before using, to make sure you have the lates
 #### Requirements:
 Install [Strawberry Perl](http://strawberryperl.com/) using the `.msi` installer from the website.
 
-Install `Win32::GUI`, and `Tie::IxHash` using the `cpanm` Perl package installer (included with Strawberry Perl)
-> `cpanm install Win32::GUI Tie::IxHash` 
+Install the dependencies using the `cpanm` Perl package installer (included with Strawberry Perl)
+> `cpanm --installdeps .`
