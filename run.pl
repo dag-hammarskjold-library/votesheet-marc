@@ -40,7 +40,8 @@ use constant MEMBERS => {
 	'BELIZE' => 'BLZ',
 	'BENIN' => 'BEN',
 	'BHUTAN' => 'BTN',
-	'BOLIVIA (PLURINATIONAL STATE OF)' => 'BOL',
+	#'BOLIVIA (PLURINATIONAL STATE OF)' => 'BOL',
+	'BOLIVIA' => 'BOL',
 	'BOSNIA AND HERZEGOVINA' => 'BIH',
 	'BOTSWANA' => 'BWA',
 	'BRAZIL' => 'BRA',
@@ -219,6 +220,7 @@ use constant MEMBERS => {
 
 # use thes map between names as they appear on the sheet to how they should appear in Horizon
 use constant TO_HZN => {
+	'BOLIVIA' => 'BOLIVIA (PLURINATIONAL STATE OF)',
 	'CZECH REPUBLIC' => 'CZECHIA',
 	'VENEZUELA' => 'VENEZUELA (BOLIVARIAN REPUBLIC OF)',
 };
