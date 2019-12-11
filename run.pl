@@ -19,232 +19,247 @@ sub new {
 package Members;
 use base 'Class';
 
+# Update this hash if any names change as they appear on the votesheet.
+# The keys are the country "codes." The values are the names as they appear on the votesheet.
+# The script will fail if any names as they appear on the votesheet aren't in this hash. 
+# If a name is supposed to appear in Horizon differently than it appears on the votesheet,
+# then the value has to be an array where the first val is the votesheet name, and the second 
+# val is the Horizon name.
+
 use constant MEMBERS => {
-	'AFGHANISTAN' => 'AFG',
-	'ALBANIA' => 'ALB',
-	'ALGERIA' => 'DZA',
-	'ANDORRA' => 'AND',
-	'ANGOLA' => 'AGO',
-	'ANTIGUA AND BARBUDA' => 'ATG',
-	'ARGENTINA' => 'ARG',
-	'ARMENIA' => 'ARM',
-	'AUSTRALIA' => 'AUS',
-	'AUSTRIA' => 'AUT',
-	'AZERBAIJAN' => 'AZE',
-	'BAHAMAS' => 'BHS',
-	'BAHRAIN' => 'BHR',
-	'BANGLADESH' => 'BGD',
-	'BARBADOS' => 'BRB',
-	'BELARUS' => 'BLR',
-	'BELGIUM' => 'BEL',
-	'BELIZE' => 'BLZ',
-	'BENIN' => 'BEN',
-	'BHUTAN' => 'BTN',
-	#'BOLIVIA (PLURINATIONAL STATE OF)' => 'BOL',
-	'BOLIVIA' => 'BOL',
-	'BOSNIA AND HERZEGOVINA' => 'BIH',
-	'BOTSWANA' => 'BWA',
-	'BRAZIL' => 'BRA',
-	'BRUNEI DARUSSALAM' => 'BRN',
-	'BULGARIA' => 'BGR',
-	'BURKINA FASO' => 'BFA',
-	'BURUNDI' => 'BDI',
-	'CABO VERDE' => 'CPV',
-	'CAMBODIA' => 'KHM',
-	'CAMEROON' => 'CMR',
-	'CANADA' => 'CAN',
-	'CENTRAL AFRICAN REPUBLIC' => 'CAF',
-	'CHAD' => 'TCD',
-	'CHILE' => 'CHL',
-	'CHINA' => 'CHN',
-	'COLOMBIA' => 'COL',
-	'COMOROS' => 'COM',
-	'CONGO' => 'COG',
-	'COSTA RICA' => 'CRI',
-	'COTE D\'IVOIRE' => 'CIV',
-	'CROATIA' => 'HRV',
-	'CUBA' => 'CUB',
-	'CYPRUS' => 'CYP',
-	'CZECH REPUBLIC' => 'CZE',
-	'DEMOCRATIC PEOPLE\'S REPUBLIC OF KOREA' => 'PRK',
-	'DEMOCRATIC REPUBLIC OF THE CONGO' => 'COD',
-	'DENMARK' => 'DNK',
-	'DJIBOUTI' => 'DJI',
-	'DOMINICA' => 'DMA',
-	'DOMINICAN REPUBLIC' => 'DOM',
-	'ECUADOR' => 'ECU',
-	'EGYPT' => 'EGY',
-	'EL SALVADOR' => 'SLV',
-	'EQUATORIAL GUINEA' => 'GNQ',
-	'ERITREA' => 'ERI',
-	'ESTONIA' => 'EST',
-	'ETHIOPIA' => 'ETH',
-	'FIJI' => 'FJI',
-	'FINLAND' => 'FIN',
-	'FRANCE' => 'FRA',
-	'GABON' => 'GAB',
-	'GAMBIA' => 'GMB',
-	'GEORGIA' => 'GEO',
-	'GERMANY' => 'DEU',
-	'GHANA' => 'GHA',
-	'GREECE' => 'GRC',
-	'GRENADA' => 'GRD',
-	'GUATEMALA' => 'GTM',
-	'GUINEA' => 'GIN',
-	'GUINEA-BISSAU' => 'GNB',
-	'GUYANA' => 'GUY',
-	'HAITI' => 'HTI',
-	'HONDURAS' => 'HND',
-	'HUNGARY' => 'HUN',
-	'ICELAND' => 'ISL',
-	'INDIA' => 'IND',
-	'INDONESIA' => 'IDN',
-	'IRAN (ISLAMIC REPUBLIC OF)' => 'IRN',
-	'IRAQ' => 'IRQ',
-	'IRELAND' => 'IRL',
-	'ISRAEL' => 'ISR',
-	'ITALY' => 'ITA',
-	'JAMAICA' => 'JAM',
-	'JAPAN' => 'JPN',
-	'JORDAN' => 'JOR',
-	'KAZAKHSTAN' => 'KAZ',
-	'KENYA' => 'KEN',
-	'KIRIBATI' => 'KIR',
-	'KUWAIT' => 'KWT',
-	'KYRGYZSTAN' => 'KGZ',
-	'LAO PEOPLE\'S DEMOCRATIC REPUBLIC' => 'LAO',
-	'LATVIA' => 'LVA',
-	'LEBANON' => 'LBN',
-	'LESOTHO' => 'LSO',
-	'LIBERIA' => 'LBR',
-	'LIBYA' => 'LBY',
-	'LIECHTENSTEIN' => 'LIE',
-	'LITHUANIA' => 'LTU',
-	'LUXEMBOURG' => 'LUX',
-	'MADAGASCAR' => 'MDG',
-	'MALAWI' => 'MWI',
-	'MALAYSIA' => 'MYS',
-	'MALDIVES' => 'MDV',
-	'MALI' => 'MLI',
-	'MALTA' => 'MLT',
-	'MARSHALL ISLANDS' => 'MHL',
-	'MAURITANIA' => 'MRT',
-	'MAURITIUS' => 'MUS',
-	'MEXICO' => 'MEX',
-	'MICRONESIA (FEDERATED STATES OF)' => 'FSM',
-	'MONACO' => 'MCO',
-	'MONGOLIA' => 'MNG',
-	'MONTENEGRO' => 'MNE',
-	'MOROCCO' => 'MAR',
-	'MOZAMBIQUE' => 'MOZ',
-	'MYANMAR' => 'MMR',
-	'NAMIBIA' => 'NAM',
-	'NAURU' => 'NRU',
-	'NEPAL' => 'NPL',
-	'NETHERLANDS' => 'NLD',
-	'NEW ZEALAND' => 'NZL',
-	'NICARAGUA' => 'NIC',
-	'NIGER' => 'NER',
-	'NIGERIA' => 'NGA',
-	'NORWAY' => 'NOR',
-	'OMAN' => 'OMN',
-	'PAKISTAN' => 'PAK',
-	'PALAU' => 'PLW',
-	'PANAMA' => 'PAN',
-	'PAPUA NEW GUINEA' => 'PNG',
-	'PARAGUAY' => 'PRY',
-	'PERU' => 'PER',
-	'PHILIPPINES' => 'PHL',
-	'POLAND' => 'POL',
-	'PORTUGAL' => 'PRT',
-	'QATAR' => 'QAT',
-	'REPUBLIC OF KOREA' => 'KOR',
-	'REPUBLIC OF MOLDOVA' => 'MDA',
-	'ROMANIA' => 'ROU',
-	'RUSSIAN FEDERATION' => 'RUS',
-	'RWANDA' => 'RWA',
-	'SAINT KITTS AND NEVIS' => 'KNA',
-	'SAINT LUCIA' => 'LCA',
-	'SAINT VINCENT AND THE GRENADINES' => 'VCT',
-	'SAMOA' => 'WSM',
-	'SAN MARINO' => 'SMR',
-	'SAO TOME AND PRINCIPE' => 'STP',
-	'SAUDI ARABIA' => 'SAU',
-	'SENEGAL' => 'SEN',
-	'SERBIA' => 'SRB',
-	'SEYCHELLES' => 'SYC',
-	'SIERRA LEONE' => 'SLE',
-	'SINGAPORE' => 'SGP',
-	'SLOVAKIA' => 'SVK',
-	'SLOVENIA' => 'SVN',
-	'SOLOMON ISLANDS' => 'SLB',
-	'SOMALIA' => 'SOM',
-	'SOUTH AFRICA' => 'ZAF',
-	'SOUTH SUDAN' => 'SSD',
-	'SPAIN' => 'ESP',
-	'SRI LANKA' => 'LKA',
-	'SUDAN' => 'SDN',
-	'SURINAME' => 'SUR',
-	#'SWAZILAND' => 'SWZ',
-	'ESWATINI' => 'SWZ',
-	'SWEDEN' => 'SWE',
-	'SWITZERLAND' => 'CHE',
-	'SYRIAN ARAB REPUBLIC' => 'SYR',
-	'TAJIKISTAN' => 'TJK',
-	'THAILAND' => 'THA',
-	#'THE FORMER YUGOSLAV REPUBLIC OF MACEDONIA' => 'MKD',
-	'NORTH MACEDONIA' => 'MKD',
-	'TIMOR-LESTE' => 'TLS',
-	'TOGO' => 'TGO',
-	'TONGA' => 'TON',
-	'TRINIDAD AND TOBAGO' => 'TTO',
-	'TUNISIA' => 'TUN',
-	'TURKEY' => 'TUR',
-	'TURKMENISTAN' => 'TKM',
-	'TUVALU' => 'TUV',
-	'UGANDA' => 'UGA',
-	'UKRAINE' => 'UKR',
-	'UNITED ARAB EMIRATES' => 'ARE',
-	'UNITED KINGDOM' => 'GBR',
-	'UNITED REPUBLIC OF TANZANIA' => 'TZA',
-	'UNITED STATES' => 'USA',
-	'URUGUAY' => 'URY',
-	'UZBEKISTAN' => 'UZB',
-	'VANUATU' => 'VUT',
-	'VENEZUELA' => 'VEN',
-	'VIET NAM' => 'VNM',
-	'YEMEN' => 'YEM',
-	'ZAMBIA' => 'ZMB',
-	'ZIMBABWE' => 'ZWE'
+	'AFG' => 'AFGHANISTAN',
+	'ALB' => 'ALBANIA',
+	'DZA' => 'ALGERIA',
+	'AND' => 'ANDORRA',
+	'AGO' => 'ANGOLA',
+	'ATG' => 'ANTIGUA AND BARBUDA',
+	'ARG' => 'ARGENTINA',
+	'ARM' => 'ARMENIA',
+	'AUS' => 'AUSTRALIA',
+	'AUT' => 'AUSTRIA',
+	'AZE' => 'AZERBAIJAN',
+	'BHS' => 'BAHAMAS',
+	'BHR' => 'BAHRAIN',
+	'BGD' => 'BANGLADESH',
+	'BRB' => 'BARBADOS',
+	'BLR' => 'BELARUS',
+	'BEL' => 'BELGIUM',
+	'BLZ' => 'BELIZE',
+	'BEN' => 'BENIN',
+	'BTN' => 'BHUTAN',
+	'BOL' => ['BOLIVIA', 'BOLIVIA (PLURINATIONAL STATE OF)'],
+	'BIH' => 'BOSNIA AND HERZEGOVINA',
+	'BWA' => 'BOTSWANA',
+	'BRA' => 'BRAZIL',
+	'BRN' => 'BRUNEI DARUSSALAM',
+	'BGR' => 'BULGARIA',
+	'BFA' => 'BURKINA FASO',
+	'BDI' => 'BURUNDI',
+	'CPV' => 'CABO VERDE',
+	'KHM' => 'CAMBODIA',
+	'CMR' => 'CAMEROON',
+	'CAN' => 'CANADA',
+	'CAF' => 'CENTRAL AFRICAN REPUBLIC',
+	'TCD' => 'CHAD',
+	'CHL' => 'CHILE',
+	'CHN' => 'CHINA',
+	'COL' => 'COLOMBIA',
+	'COM' => 'COMOROS',
+	'COG' => 'CONGO',
+	'CRI' => 'COSTA RICA',
+	'CIV' => 'COTE D\'IVOIRE',
+	'HRV' => 'CROATIA',
+	'CUB' => 'CUBA',
+	'CYP' => 'CYPRUS',
+	'CZE' => ['CZECH REPUBLIC', 'CZECHIA'],
+	'PRK' => 'DEMOCRATIC PEOPLE\'S REPUBLIC OF KOREA',
+	'COD' => 'DEMOCRATIC REPUBLIC OF THE CONGO',
+	'DNK' => 'DENMARK',
+	'DJI' => 'DJIBOUTI',
+	'DMA' => 'DOMINICA',
+	'DOM' => 'DOMINICAN REPUBLIC',
+	'ECU' => 'ECUADOR',
+	'EGY' => 'EGYPT',
+	'SLV' => 'EL SALVADOR',
+	'GNQ' => 'EQUATORIAL GUINEA',
+	'ERI' => 'ERITREA',
+	'EST' => 'ESTONIA',
+	'ETH' => 'ETHIOPIA',
+	'FJI' => 'FIJI',
+	'FIN' => 'FINLAND',
+	'FRA' => 'FRANCE',
+	'GAB' => 'GABON',
+	'GMB' => 'GAMBIA',
+	'GEO' => 'GEORGIA',
+	'DEU' => 'GERMANY',
+	'GHA' => 'GHANA',
+	'GRC' => 'GREECE',
+	'GRD' => 'GRENADA',
+	'GTM' => 'GUATEMALA',
+	'GIN' => 'GUINEA',
+	'GNB' => 'GUINEA-BISSAU',
+	'GUY' => 'GUYANA',
+	'HTI' => 'HAITI',
+	'HND' => 'HONDURAS',
+	'HUN' => 'HUNGARY',
+	'ISL' => 'ICELAND',
+	'IND' => 'INDIA',
+	'IDN' => 'INDONESIA',
+	'IRN' => 'IRAN (ISLAMIC REPUBLIC OF)',
+	'IRQ' => 'IRAQ',
+	'IRL' => 'IRELAND',
+	'ISR' => 'ISRAEL',
+	'ITA' => 'ITALY',
+	'JAM' => 'JAMAICA',
+	'JPN' => 'JAPAN',
+	'JOR' => 'JORDAN',
+	'KAZ' => 'KAZAKHSTAN',
+	'KEN' => 'KENYA',
+	'KIR' => 'KIRIBATI',
+	'KWT' => 'KUWAIT',
+	'KGZ' => 'KYRGYZSTAN',
+	'LAO' => 'LAO PEOPLE\'S DEMOCRATIC REPUBLIC',
+	'LVA' => 'LATVIA',
+	'LBN' => 'LEBANON',
+	'LSO' => 'LESOTHO',
+	'LBR' => 'LIBERIA',
+	'LBY' => 'LIBYA',
+	'LIE' => 'LIECHTENSTEIN',
+	'LTU' => 'LITHUANIA',
+	'LUX' => 'LUXEMBOURG',
+	'MDG' => 'MADAGASCAR',
+	'MWI' => 'MALAWI',
+	'MYS' => 'MALAYSIA',
+	'MDV' => 'MALDIVES',
+	'MLI' => 'MALI',
+	'MLT' => 'MALTA',
+	'MHL' => 'MARSHALL ISLANDS',
+	'MRT' => 'MAURITANIA',
+	'MUS' => 'MAURITIUS',
+	'MEX' => 'MEXICO',
+	'FSM' => 'MICRONESIA (FEDERATED STATES OF)',
+	'MCO' => 'MONACO',
+	'MNG' => 'MONGOLIA',
+	'MNE' => 'MONTENEGRO',
+	'MAR' => 'MOROCCO',
+	'MOZ' => 'MOZAMBIQUE',
+	'MMR' => 'MYANMAR',
+	'NAM' => 'NAMIBIA',
+	'NRU' => 'NAURU',
+	'NPL' => 'NEPAL',
+	'NLD' => 'NETHERLANDS',
+	'NZL' => 'NEW ZEALAND',
+	'NIC' => 'NICARAGUA',
+	'NER' => 'NIGER',
+	'NGA' => 'NIGERIA',
+	'NOR' => 'NORWAY',
+	'OMN' => 'OMAN',
+	'PAK' => 'PAKISTAN',
+	'PLW' => 'PALAU',
+	'PAN' => 'PANAMA',
+	'PNG' => 'PAPUA NEW GUINEA',
+	'PRY' => 'PARAGUAY',
+	'PER' => 'PERU',
+	'PHL' => 'PHILIPPINES',
+	'POL' => 'POLAND',
+	'PRT' => 'PORTUGAL',
+	'QAT' => 'QATAR',
+	'KOR' => 'REPUBLIC OF KOREA',
+	'MDA' => 'REPUBLIC OF MOLDOVA',
+	'ROU' => 'ROMANIA',
+	'RUS' => 'RUSSIAN FEDERATION',
+	'RWA' => 'RWANDA',
+	'KNA' => 'SAINT KITTS AND NEVIS',
+	'LCA' => 'SAINT LUCIA',
+	'VCT' => 'SAINT VINCENT AND THE GRENADINES',
+	'WSM' => 'SAMOA',
+	'SMR' => 'SAN MARINO',
+	'STP' => 'SAO TOME AND PRINCIPE',
+	'SAU' => 'SAUDI ARABIA',
+	'SEN' => 'SENEGAL',
+	'SRB' => 'SERBIA',
+	'SYC' => 'SEYCHELLES',
+	'SLE' => 'SIERRA LEONE',
+	'SGP' => 'SINGAPORE',
+	'SVK' => 'SLOVAKIA',
+	'SVN' => 'SLOVENIA',
+	'SLB' => 'SOLOMON ISLANDS',
+	'SOM' => 'SOMALIA',
+	'ZAF' => 'SOUTH AFRICA',
+	'SSD' => 'SOUTH SUDAN',
+	'ESP' => 'SPAIN',
+	'LKA' => 'SRI LANKA',
+	'SDN' => 'SUDAN',
+	'SUR' => 'SURINAME',
+	'SWZ' => 'ESWATINI',
+	'SWE' => 'SWEDEN',
+	'CHE' => 'SWITZERLAND',
+	'SYR' => 'SYRIAN ARAB REPUBLIC',
+	'TJK' => 'TAJIKISTAN',
+	'THA' => 'THAILAND',
+	'MKD' => 'NORTH MACEDONIA',
+	'TLS' => 'TIMOR-LESTE',
+	'TGO' => 'TOGO',
+	'TON' => 'TONGA',
+	'TTO' => 'TRINIDAD AND TOBAGO',
+	'TUN' => 'TUNISIA',
+	'TUR' => 'TURKEY',
+	'TKM' => 'TURKMENISTAN',
+	'TUV' => 'TUVALU',
+	'UGA' => 'UGANDA',
+	'UKR' => 'UKRAINE',
+	'ARE' => 'UNITED ARAB EMIRATES',
+	'GBR' => 'UNITED KINGDOM',
+	'TZA' => 'UNITED REPUBLIC OF TANZANIA',
+	'USA' => 'UNITED STATES',
+	'URY' => 'URUGUAY',
+	'UZB' => 'UZBEKISTAN',
+	'VUT' => 'VANUATU',
+	'VEN' => ['VENEZUELA','VENEZUELA (BOLIVARIAN REPUBLIC OF)'],
+	'VNM' => 'VIET NAM',
+	'YEM' => 'YEMEN',
+	'ZMB' => 'ZAMBIA',
+	'ZWE' => 'ZIMBABWE',
 };
 
-# use thes map between names as they appear on the sheet to how they should appear in Horizon
-use constant TO_HZN => {
-	'BOLIVIA' => 'BOLIVIA (PLURINATIONAL STATE OF)',
-	'CZECH REPUBLIC' => 'CZECHIA',
-	'VENEZUELA' => 'VENEZUELA (BOLIVARIAN REPUBLIC OF)',
-};
-
-sub ids {
+sub short_names {
 	my $self = shift;
-	return $self->{ids} if $self->{ids};
-	my %ids;
-	for (keys %{&MEMBERS}) {
-		my $id = substr($_,0,14);
-		$ids{$id} = $_;
+	return $self->{short_names} if $self->{short_names};
+	
+	my %shortnames;
+	while (my ($k,$v) = each %{&MEMBERS}) {
+		my $name = ref $v eq 'ARRAY' ? $v->[0] : $v;
+		my $short = substr($name,0,14);
+		$shortnames{$short} = $name;
 	}
-	$self->{ids} = \%ids;
-	return $self->{ids};
+	$self->{short_names} = \%shortnames;
+	
+	return $self->{short_names};
 }
 
 sub codes {
 	my $self = shift;
-	return &MEMBERS;
+	
+	my %codes;
+	for (keys %{&MEMBERS}) {
+		my $name = ref MEMBERS->{$_} eq 'ARRAY' ? MEMBERS->{$_}->[0] : MEMBERS->{$_};
+		$codes{$name} = $_;
+	}
+	
+	return \%codes;
 }
 
 sub hzn_name {
 	my ($self,$name) = @_;
-	return TO_HZN->{$name};
+	
+	my %hzn_names;
+	while (my ($k, $v) = each %{&MEMBERS}) {
+		if (ref $v eq 'ARRAY') {
+			$hzn_names{$v->[0]} = $v->[1] 
+		} 
+	}
+	
+	return \%hzn_names;
 }
 
 
@@ -472,8 +487,9 @@ sub convert {
 				$vote = 'X';
 				$text = $chunk;
 			}
-			my $id = substr $text,0,14;
-			my $member = $members->ids->{$id};		
+			my $short_name = substr $text,0,14;
+			my $member = $members->short_names->{$short_name};		
+			
 			if ($member) {
 				{
 					# this handles false-positive strings REPUBLIC OF KOREA and CONGO.
@@ -494,7 +510,7 @@ sub convert {
 				$field->set_sub('a',$memcount);
 				$field->set_sub('c',$members->codes->{$member});
 				$field->set_sub('d',$vote) unless $vote eq 'X';
-				$field->set_sub('e',$members->hzn_name($member) // $member);
+				$field->set_sub('e',$members->hzn_name->{$member} // $member);
 				$record->add_field($field);
 				$results{$vote}++;
 				
@@ -503,7 +519,7 @@ sub convert {
 			}
 		}	
 		my @unseen;
-		for my $mem (sort values %{$members->ids}) {
+		for my $mem (sort values %{$members->short_names}) {
 			push @unseen, $mem if none {$_ eq $mem} keys %seen;
 		}
 		if (@unseen) {
