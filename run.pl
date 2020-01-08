@@ -4,8 +4,8 @@ use strict;
 use warnings;
 use feature qw|say|;
 
-use FindBin;
-use lib "$FindBin::Bin/lib";
+use FindBin qw|$Bin|;
+use lib "$Bin/lib";
 
 package Class;
 use Data::Dumper;
@@ -266,6 +266,7 @@ sub hzn_name {
 package PDF::Text;
 use base 'Class';
 #use PDF::API2;
+use FindBin qw |$Bin|;
 
 sub text {
 	my $self = shift;
@@ -273,9 +274,11 @@ sub text {
 	return $self->{text} if $self->{text};
 	die "pdf not found" if ! -e $file;
 	chmod 0777, $file; 
+	
 	$file = qq/"$file"/;
-	$self->{text} = qx|s:/Bin_new/pdftotext -layout -enc UTF-8 $file -| 
-		or die qq|Check connection to the S: drive (access to executable "S:\\Bin_new\\pdftotext.exe" is required)\n|;
+	$ENV{PATH} .= ";$Bin";
+	$self->{text} = qx|pdftotext -layout -enc UTF-8 $file -|
+		or die qq|`pdftotext` execution failed. Make sure it's in the PATH or the root of this repo.|;
 	return $self->{text};
 }
 
@@ -342,7 +345,7 @@ sub MAIN {
 			map {/([^\/]+)$/} 
 		@paths;
 		@fns = @fns[0,-1] unless @fns == 1;
-		$ofn = 'results/'.join('...',@fns).'.mrc';
+		$ofn = $Bin.'/results/'.join('...',@fns).'.mrc';
 		
 		if (! -e 'results') {
 			mkdir 'results' or die $!;
