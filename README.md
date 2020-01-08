@@ -18,8 +18,8 @@ Install the dependencies using the `cpanm` Perl package installer (included with
 > `cpanm --installdeps .`
 
 #### Usage:
-It's a good idea to run `git pull` before using, to make sure you have the latest source code.<br>
+It's a good idea to run `git pull` before using, to make sure you have the latest source code.
 
-Double click "run.bat" or run from the command line
+Double-click "run.bat", or run from the command line:
 
 > `perl run.pl`
