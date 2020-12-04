@@ -1,3 +1,3 @@
 
-requires 'Win32::GUI';
+#requires 'Win32::GUI';
 requires 'Tie::IxHash';
