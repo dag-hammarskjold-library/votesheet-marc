@@ -4,8 +4,8 @@ use strict;
 use warnings;
 use feature qw|say|;
 
-use FindBin;
-use lib "$FindBin::Bin/lib";
+use FindBin qw|$Bin|;
+use lib "$Bin/lib";
 
 package Class;
 use Data::Dumper;
@@ -64,7 +64,7 @@ use constant MEMBERS => {
 	'CHL' => 'CHILE',
 	'CHN' => 'CHINA',
 	'COL' => 'COLOMBIA',
-	'COM' => 'COMOROS',	
+	'COM' => 'COMOROS',
 	'COG' => 'CONGO',
 	'CRI' => 'COSTA RICA',
 	'CIV' => 'COTE D\'IVOIRE',
@@ -118,7 +118,7 @@ use constant MEMBERS => {
 	'KIR' => 'KIRIBATI',
 	'KWT' => 'KUWAIT',
 	'KGZ' => 'KYRGYZSTAN',
-	'LAO' => 'LAO PEOPLE\'S DEMOCRATIC REPUBLIC',
+	'LAO' => ['LAO PDR', 'LAO PEOPLE\'S DEMOCRATIC REPUBLIC'],
 	'LVA' => 'LATVIA',
 	'LBN' => 'LEBANON',
 	'LSO' => 'LESOTHO',
@@ -266,6 +266,7 @@ sub hzn_name {
 package PDF::Text;
 use base 'Class';
 #use PDF::API2;
+use FindBin qw |$Bin|;
 
 sub text {
 	my $self = shift;
@@ -273,28 +274,29 @@ sub text {
 	return $self->{text} if $self->{text};
 	die "pdf not found" if ! -e $file;
 	chmod 0777, $file; 
+	
 	$file = qq/"$file"/;
-	$self->{text} = qx|pdftotext -layout -enc UTF-8 $file -|;
-		#or die qq|Check connection to the S: drive (access to executable "S:\\Bin_new\\pdftotext.exe" is required)\n|;
-		
+	$ENV{PATH} .= ";$Bin";
+	$self->{text} = qx|pdftotext -layout -enc UTF-8 $file -|
+		or die qq|`pdftotext` execution failed. Make sure it's in the PATH or the root of this repo.|;
 	return $self->{text};
 }
 
 sub chunks {
 	my $self = shift;
 	return $self->{chunks} if $self->{chunks};
-	$self->{chunks} = [map {split(/ {2,}/, $_)} split(/[\r\n]+/, $self->text)];
-	return $self->{chunks};
+	my @split = map {s/\s+$//r} split(/\s{2,}|\n/, $self->text);
+	$self->{chunks} = \@split;
 }
 
 package main;
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 use Getopt::Std;
-use List::Util qw/sum first any none uniq/;
+use List::Util qw/sum first none uniq/;
 use Time::Piece;
 use Cwd;
-#use Win32::GUI;
+use Win32::GUI;
 use MARC;
 
 INIT {}
@@ -306,7 +308,7 @@ RUN: {
 sub options {
 	my @opts = (
 		['h' => 'help'],
-		#['i:' => 'input file (path)']
+		['i:' => 'input file (path)']
 	);
 	getopts (join('',map {$_->[0]} @opts), \my %opts);
 	#if (! %opts || $opts{h}) {
@@ -320,20 +322,19 @@ sub options {
 
 sub MAIN {
 	my $opts = shift;
-	
-	my @paths = @ARGV or die "File paths required as arguements\n";
 		
-	#my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
+	my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
 	
-	#if (@chosen == 1) {
-	#	unless ($chosen[0]) {
-	#		die "No files chosen\n";
-	#	}
-	#	push @paths, shift @chosen;
-	#} elsif (@chosen > 1) {
-	#	my $dir = shift @chosen;
-	#	push @paths, $_ for map {$dir."/$_"} @chosen;
-	#} 
+	my @paths;
+	if (@chosen == 1) {
+		unless ($chosen[0]) {
+			die "No files chosen\n";
+		}
+		push @paths, shift @chosen;
+	} elsif (@chosen > 1) {
+		my $dir = shift @chosen;
+		push @paths, $_ for map {$dir."/$_"} @chosen;
+	} 
 	
 	my ($ofn,$ofh);
 	IO: {
@@ -344,7 +345,7 @@ sub MAIN {
 			map {/([^\/]+)$/} 
 		@paths;
 		@fns = @fns[0,-1] unless @fns == 1;
-		$ofn = 'results/'.join('...',@fns).'.mrc';
+		$ofn = $Bin.'/results/'.join('...',@fns).'.mrc';
 		
 		if (! -e 'results') {
 			mkdir 'results' or die $!;
@@ -353,14 +354,12 @@ sub MAIN {
 	}
 	
 	FILES: while (my $file = shift @paths) {
-		-e $file or die qq|File "$file" not found\n|;
 		say qq|\nOK. processing "$file"\n|;
+		#system qq|start "C:\\Program Files (x86)\\Google\\Chrome\\Application" "$file"|;
 	
 		print "Please enter the resolution symbol: ";
 		my $symbol = <STDIN>;
 		chomp $symbol;
-		
-		$symbol || die "No resoluton symbol provided";
 		
 		convert($file,$symbol,$ofh);
 		
@@ -373,10 +372,8 @@ sub MAIN {
 	
 	$ofn = join('/',getcwd(),$ofn) =~ s|/|\\|gr;
 	
-	#system qq{echo $ofn | clip};
-	#say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
-	$ofn =~ s/\\/\//g;
-	say qq|Output file path:\n"$ofn"\n.|;
+	system qq{echo $ofn | clip};
+	say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
 }
 
 sub convert {
@@ -484,57 +481,46 @@ sub convert {
 	my %results;
 	VOTES: {
 		my (%seen,$memcount);
-			
-		NAMES: for my $short_name (sort keys %{$members->short_names}) {
-			my ($vote, $member);
-			
-			my $match = "\Q$short_name\E";
-			
-			if (any {$short_name eq $_} 'DOMINICA', 'GUINEA', 'MALI', 'NIGER', 'OMAN') {
-				$match .= '\s';
+		CHUNKS: for my $chunk (sort {$a =~ s/[YNA] //r cmp $b =~ s/[YNA] //r} @{$pdf->chunks}) {
+			my ($vote,$text);
+			if ($chunk =~ /^([YNA]) /) {
+				$vote = $1;
+				$text = substr $chunk,2;
+			} else {
+				$vote = 'X';
+				$text = $chunk;
 			}
+			my $short_name = substr $text,0,14;
+			my $member = $members->short_names->{$short_name};		
 			
-			if (my $count = () = $pdf->text =~ /$match/g) {
-				my %check = (
-					'CONGO' => 2,
-					'GUINEA' => 3,
-					'REPUBLIC OF KO' => 2,
-					'SUDAN' => 2
-				);
-				
-				if (my $should = $check{$short_name}) {
-					die if $count != $should;
+			if ($member) {
+				{
+					# this handles false-positive strings REPUBLIC OF KOREA and CONGO.
+					# it only works because in both cases their second appearance is the false one
+					next CHUNKS if $seen{$member}; 
+					$seen{$member} = 1;
 				}
-				
-				if ($pdf->text =~ /\s([YNA]) +$match/) {
-					$vote = $1;
-				} else {
-					$vote = 'X';
+				$memcount++;
+				my $tag;
+				if ( $record->tag_count('967') < 65 ) {
+					$tag = '967';
+				} elsif ( $record->tag_count('968') < 65 ) {
+					$tag = '968';
+				} else  {
+					$tag = '969';
 				}
+				my $field = MARC::Field->new(tag => $tag);
+				$field->set_sub('a',$memcount);
+				$field->set_sub('c',$members->codes->{$member});
+				$field->set_sub('d',$vote) unless $vote eq 'X';
+				$field->set_sub('e',$members->hzn_name->{$member} // $member);
+				$record->add_field($field);
+				$results{$vote}++;
+				
+			} else {
+				#say $chunk;
 			}
-			
-			$member = $members->short_names->{$short_name};	
-	
-			$memcount++;					
-			$seen{$member} = 1;
-			
-			my $tag;
-			if ($record->tag_count('967') < 65 ) {
-				$tag = '967';
-			} elsif ($record->tag_count('968') < 65 ) {
-				$tag = '968';
-			} else  {
-				$tag = '969';
-			}
-			my $field = MARC::Field->new(tag => $tag);
-			$field->set_sub('a',$memcount);
-			$field->set_sub('c',$members->codes->{$member});
-			$field->set_sub('d',$vote) unless $vote eq 'X';
-			$field->set_sub('e',$members->hzn_name->{$member} // $member);
-			$record->add_field($field);
-			$results{$vote}++;
-		}
-		
+		}	
 		my @unseen;
 		for my $mem (sort values %{$members->short_names}) {
 			push @unseen, $mem if none {$_ eq $mem} keys %seen;
