@@ -372,7 +372,7 @@ sub MAIN {
 	
 	$ofn = join('/',getcwd(),$ofn) =~ s|/|\\|gr;
 	
-	system qq{echo $ofn | clip};
+	system qq{echo | set /p="$ofn" | clip};
 	say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
 }
 
