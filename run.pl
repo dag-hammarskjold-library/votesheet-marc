@@ -370,7 +370,8 @@ sub MAIN {
 		}
 	}
 	
-	$ofn = join('/',getcwd(),$ofn) =~ s|/|\\|gr;
+	#$ofn = join('/',getcwd(),$ofn) =~ s|/|\\|gr;
+	 $ofn = $ofn =~ s|/|\\|gr;
 	
 	system qq{echo | set /p="$ofn" | clip};
 	say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
