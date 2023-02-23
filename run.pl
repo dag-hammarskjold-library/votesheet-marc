@@ -345,7 +345,7 @@ sub MAIN {
 			map {/([^\/]+)$/} 
 		@paths;
 		@fns = @fns[0,-1] unless @fns == 1;
-		$ofn = $Bin.'/results/'.join('...',@fns).'.mrc';
+		$ofn = $Bin.'/results/'.join('...',@fns).'.mrk';
 		
 		if (! -e 'results') {
 			mkdir 'results' or die $!;
@@ -502,14 +502,14 @@ sub convert {
 					$seen{$member} = 1;
 				}
 				$memcount++;
-				my $tag;
-				if ( $record->tag_count('967') < 65 ) {
-					$tag = '967';
-				} elsif ( $record->tag_count('968') < 65 ) {
-					$tag = '968';
-				} else  {
-					$tag = '969';
-				}
+				my $tag = '967';
+				#if ( $record->tag_count('967') < 65 ) {
+				#	$tag = '967';
+				#} elsif ( $record->tag_count('968') < 65 ) {
+				#	$tag = '968';
+				#} else  {
+				#	$tag = '969';
+				#}
 				my $field = MARC::Field->new(tag => $tag);
 				$field->set_sub('a',$memcount);
 				$field->set_sub('c',$members->codes->{$member});
@@ -542,7 +542,7 @@ sub convert {
 		$record->add_field($_996);
 	}
 	
-	print {$ofh} $record->to_marc21;
+	print {$ofh} $record->to_mrk;
 	say $record->to_mrk;
 }
 
