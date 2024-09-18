@@ -27,4 +27,4 @@ perl votesheet-marc.pl file1.pdf file2.pdf
 
 For convenience, the batch file `votesheet-marc.bat` can be used to invoke the script. This method provides a GUI file chooser for selecting the votesheet file(s). The batch file can be run via command line, or by double-clicking.
 
-For each file path provided to the script, the user will be prompted to manually enter the resolution symbol for the vote in the file. The user is able to review the results on the screen, to compare with the data in the PDF if they wish. When all the files have been processed, one MARC file (.mrc or .mrk) is produced containing the MARC data for all the files prcossed as a batch for import into Horizon. 
+For each file path provided to the script, the user will be prompted to manually enter the resolution symbol for the vote in the file. The user is able to review the results on the screen, to compare with the data in the PDF if they wish. When all the files have been processed, one MARC file (.mrc or .mrk) is produced containing the MARC data for all the files prcossed as a batch for import. 
