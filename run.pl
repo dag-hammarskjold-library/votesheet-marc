@@ -203,7 +203,8 @@ use constant MEMBERS => {
 	'TON' => 'TONGA',
 	'TTO' => 'TRINIDAD AND TOBAGO',
 	'TUN' => 'TUNISIA',
-	'TUR' => ['TÜRKIYE', 'TÜRKİYE'],
+	#'TUR' => ['TÜRKIYE', 'TÜRKİYE'],
+	'TUR' => ['TÜRKİYE', 'TÜRKİYE'],
 	'TKM' => 'TURKMENISTAN',
 	'TUV' => 'TUVALU',
 	'UGA' => 'UGANDA',
@@ -277,7 +278,7 @@ sub text {
 	
 	$file = qq/"$file"/;
 	$ENV{PATH} .= ";$Bin";
-	$self->{text} = qx|pdftotext -layout -enc UTF-8 $file -|
+	$self->{text} = qx|./pdftotext -layout -enc UTF-8 $file -|
 		or die qq|`pdftotext` execution failed. Make sure it's in the PATH or the root of this repo.|;
 	return $self->{text};
 }
@@ -296,7 +297,7 @@ use Getopt::Std;
 use List::Util qw/sum first none uniq/;
 use Time::Piece;
 use Cwd;
-use Win32::GUI;
+#use Win32::GUI;
 use MARC;
 
 INIT {}
@@ -323,8 +324,9 @@ sub options {
 sub MAIN {
 	my $opts = shift;
 		
-	my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
-	
+	#my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
+	my @chosen = @ARGV;
+
 	my @paths;
 	if (@chosen == 1) {
 		unless ($chosen[0]) {
