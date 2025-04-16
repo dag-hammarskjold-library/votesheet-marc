@@ -2,13 +2,13 @@
 Convert vote result PDF to MARC.
 
 #### Requirements:
-The `pdftotext` executable that is part of [Xpdf](https://www.xpdfreader.com/pdftotext-man.html) needs to be in the user's PATH. One way to do this is [download and extract the command line tools](https://www.xpdfreader.com/download.html), find the `pdftotext` exectuable file, and copy it into the root of this repository.
+The `pdftotext` executable that is part of [Xpdf](https://www.xpdfreader.com/pdftotext-man.html) needs to be in the user's PATH. One way to do this is [download and extract the command line tools](https://www.xpdfreader.com/download.html), find the `pdftotext` exectuable file, and copy it into the directory you are running the script from. Make sure you get the executable for the system you are on (Windows/Mac/Linux). If using Mac or Linux, you will probably have to make the file executable by running `chmod +x pdftotxt`.
 
 Windows: 
 * [Strawberry Perl](http://strawberryperl.com/)
 
 Mac/Linux: 
-* ~Built-in Perl installation should be sufficient.~ This script is only suported for Windows at the moment.
+* Built-in Perl installation should be sufficient.
 
 #### Installation:
 > `git clone https://github.com/dag-hammarskjold-library/votesheet-marc`
