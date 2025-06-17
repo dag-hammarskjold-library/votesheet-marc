@@ -212,8 +212,8 @@ has 'delete_field' => (
 		for my $field ($self->get_fields($tag)) {
 			if (refaddr($field) == refaddr($to_delete)) {
 				splice @{$self->{fields}->{$tag}}, $i, 1;
-				$i++;
 			}
+			$i++;
 		}
 	}
 );

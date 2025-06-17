@@ -501,6 +501,7 @@ sub convert {
 						# The column-broken strings will never have a vote next to them. Therefore if we detect a vote,
 						# we can use it. If both strings have no vote, we can be sure it's a non-vote.
 						if ($field->get_value('d')) {
+							
 							# The vote has already been detected
 							next CHUNKS
 						} else {
