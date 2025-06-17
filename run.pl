@@ -495,12 +495,31 @@ sub convert {
 			my $member = $members->short_names->{$short_name};		
 			
 			if ($member) {
-				{
-					# this handles false-positive strings REPUBLIC OF KOREA and CONGO.
-					# it only works because in both cases their second appearance is the false one
-					next CHUNKS if $seen{$member}; 
-					$seen{$member} = 1;
+				if (my $field = first {$_->get_value('c') eq $members->codes->{$member}} $record->get_fields('967')) {
+					# The strings "CONGO" and "REPUBLIC OF KOREA" appear on their own lines twice due to column breaks.=
+					if (grep {$member} ['CONGO', 'REPUBLIC OF KOREA']) {
+						# The column-broken strings will never have a vote next to them. Therefore if we detect a vote,
+						# we can use it. If both strings have no vote, we can be sure it's a non-vote.
+						if ($field->get_value('d')) {
+							# The vote has already been detected
+							next CHUNKS
+						} else {
+							if ($vote eq 'X') {
+								# Both instances of the string have no vote
+								next CHUNKS
+							} else {
+								# Vote detected. Delete the already existing field and adjust the count.
+								$record->delete_field($field);
+								$results{'X'}--;
+							}
+						}
+					} else {
+						die qq{Detected member "$member" is unexpectedly repeated}
+					}
 				}
+
+				$seen{$member} = 1;
+				
 				$memcount++;
 				my $tag = '967';
 				#if ( $record->tag_count('967') < 65 ) {
@@ -531,7 +550,7 @@ sub convert {
 		}
 	}
 	
-	RESULTS : {
+	RESULTS: {
 		$results{$_} //= '0' for qw|Y N A X|;
 		my $_996 = MARC::Field->new(tag => '996');
 		$_996->set_sub('b',$results{Y});
