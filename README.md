@@ -2,7 +2,7 @@
 Convert vote result PDF to MARC.
 
 #### Requirements:
-The `pdftotext` executable that is part of [Xpdf](https://www.xpdfreader.com/pdftotext-man.html) needs to be in the user's PATH. One way to do this is [download and extract the command line tools](https://www.xpdfreader.com/download.html), find the `pdftotext` exectuable file, and copy it into the directory you are running the script from. Make sure you get the executable for the system you are on (Windows/Mac/Linux). If using Mac or Linux, you will probably have to make the file executable by running `chmod +x pdftotxt`.
+The `pdftotext` executable that is part of [Xpdf](https://www.xpdfreader.com/pdftotext-man.html) needs to be in the user's PATH. One way to do this is [download and extract the command line tools](https://www.xpdfreader.com/download.html), find the `pdftotext` exectuable file, and copy it into the directory you are running the script from. Make sure you get the executable for the system you are on (Windows/Mac/Linux). If using Mac or Linux, you will probably have to make the file executable by running `chmod +x pdftotext`.
 
 Windows: 
 * [Strawberry Perl](http://strawberryperl.com/)
