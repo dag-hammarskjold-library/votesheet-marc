@@ -278,7 +278,8 @@ sub text {
 	
 	$file = qq/"$file"/;
 	$ENV{PATH} .= ";$Bin";
-	$self->{text} = qx|./pdftotext -layout -enc UTF-8 $file -|
+	my $command = ($^O eq 'MSWin32' ? '' : './')."pdftotext -layout -enc UTF-8 $file -";
+	$self->{text} = qx|$command|
 		or die qq|`pdftotext` execution failed. Make sure it's in the PATH or the root of this repo.|;
 	return $self->{text};
 }
@@ -297,7 +298,7 @@ use Getopt::Std;
 use List::Util qw/sum first none uniq/;
 use Time::Piece;
 use Cwd;
-#use Win32::GUI;
+use if $^O eq "MSWin32", "Win32::GUI";
 use MARC;
 
 INIT {}
@@ -324,19 +325,17 @@ sub options {
 sub MAIN {
 	my $opts = shift;
 		
-	#my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
-	my @chosen = @ARGV;
-
-	my @paths;
-	if (@chosen == 1) {
-		unless ($chosen[0]) {
-			die "No files chosen\n";
-		}
-		push @paths, shift @chosen;
-	} elsif (@chosen > 1) {
-		my $dir = shift @chosen;
-		push @paths, $_ for map {$dir."/$_"} @chosen;
+	my (@paths, $dir);
+	
+	if (@ARGV) {
+		@paths = @ARGV;
+	} elsif ($^O eq 'MSWin32') {
+		my @chosen = Win32::GUI::GetOpenFileName(-multisel => 100, -filter => ['PDFs' => '*.pdf']);
+		$dir = @chosen > 1 ? shift @chosen : undef;
+		@paths = map {$dir ? $dir."/$_" : $_} @chosen;
 	} 
+	
+	@paths or die "No files specified\n";
 	
 	my ($ofn,$ofh);
 	IO: {
