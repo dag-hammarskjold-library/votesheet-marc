@@ -203,9 +203,7 @@ use constant MEMBERS => {
 	'TON' => 'TONGA',
 	'TTO' => 'TRINIDAD AND TOBAGO',
 	'TUN' => 'TUNISIA',
-	#'TUR' => ['TÜRKIYE', 'TÜRKİYE'],
-	#'TUR' => ['TÜRKİYE', 'TÜRKİYE'],
-	'TUR' => ['TURKIYE', 'TÜRKİYE'],
+	'TUR' => 'TÜRKİYE', # Alternate characters possibly appearing in the PDF are handled below
 	'TKM' => 'TURKMENISTAN',
 	'TUV' => 'TUVALU',
 	'UGA' => 'UGANDA',
@@ -494,7 +492,12 @@ sub convert {
 				$text = $chunk;
 			}
 			my $short_name = substr $text,0,14;
-			my $member = $members->short_names->{$short_name};		
+			my $member = $members->short_names->{$short_name};
+
+			# The characters for Turkiye may vary
+			if (! $member && grep {$text} qw|TURKIYE TÜRKIYE TURKİYE|) {
+				$member = 'TÜRKİYE'
+			}
 			
 			if ($member) {
 				if (my $field = first {$_->get_value('c') eq $members->codes->{$member}} $record->get_fields('967')) {
