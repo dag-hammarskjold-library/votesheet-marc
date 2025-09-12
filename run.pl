@@ -204,7 +204,8 @@ use constant MEMBERS => {
 	'TTO' => 'TRINIDAD AND TOBAGO',
 	'TUN' => 'TUNISIA',
 	#'TUR' => ['TÜRKIYE', 'TÜRKİYE'],
-	'TUR' => ['TÜRKİYE', 'TÜRKİYE'],
+	#'TUR' => ['TÜRKİYE', 'TÜRKİYE'],
+	'TUR' => ['TURKIYE', 'TÜRKİYE'],
 	'TKM' => 'TURKMENISTAN',
 	'TUV' => 'TUVALU',
 	'UGA' => 'UGANDA',
@@ -562,6 +563,8 @@ sub convert {
 		$_996->set_sub('f',sum(values %results));
 		$record->add_field($_996);
 	}
+
+	$record->add_field(MARC::Field->new(tag => '989')->set_sub('a', 'Voting Data'));
 	
 	print {$ofh} $record->to_mrk;
 	say $record->to_mrk;
