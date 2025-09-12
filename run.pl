@@ -371,9 +371,16 @@ sub MAIN {
 	}
 	
 	#$ofn = join('/',getcwd(),$ofn) =~ s|/|\\|gr;
-	 $ofn = $ofn =~ s|/|\\|gr;
 	
-	system qq{echo | set /p="$ofn" | clip};
+	if ($^O eq 'MSWin32') {
+		$ofn =  $ofn =~ s|/|\\|gr;
+		system qq{echo | set /p="$ofn" | clip};
+	} elsif ($^O eq 'darwin') {
+		system qq{printf "%s" "$ofn" | pbcopy};
+	} elsif ($^O eq 'linux') {
+		system qq{printf "%s" "$ofn" | xclip};
+	}
+
 	say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
 }
 
