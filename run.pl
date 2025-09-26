@@ -203,8 +203,7 @@ use constant MEMBERS => {
 	'TON' => 'TONGA',
 	'TTO' => 'TRINIDAD AND TOBAGO',
 	'TUN' => 'TUNISIA',
-	#'TUR' => ['TÜRKIYE', 'TÜRKİYE'],
-	'TUR' => ['TÜRKİYE', 'TÜRKİYE'],
+	'TUR' => 'TÜRKİYE', # Alternate characters possibly appearing in the PDF are handled below
 	'TKM' => 'TURKMENISTAN',
 	'TUV' => 'TUVALU',
 	'UGA' => 'UGANDA',
@@ -372,9 +371,16 @@ sub MAIN {
 	}
 	
 	#$ofn = join('/',getcwd(),$ofn) =~ s|/|\\|gr;
-	 $ofn = $ofn =~ s|/|\\|gr;
 	
-	system qq{echo | set /p="$ofn" | clip};
+	if ($^O eq 'MSWin32') {
+		$ofn =  $ofn =~ s|/|\\|gr;
+		system qq{echo | set /p="$ofn" | clip};
+	} elsif ($^O eq 'darwin') {
+		system qq{printf "%s" "$ofn" | pbcopy};
+	} elsif ($^O eq 'linux') {
+		system qq{printf "%s" "$ofn" | xclip};
+	}
+
 	say qq|The output file path:\n"$ofn"\n...has been automatically copied to your clipboard :D|;
 }
 
@@ -493,7 +499,12 @@ sub convert {
 				$text = $chunk;
 			}
 			my $short_name = substr $text,0,14;
-			my $member = $members->short_names->{$short_name};		
+			my $member = $members->short_names->{$short_name};
+
+			# The characters for Turkiye may vary
+			if (! $member && grep {$text} qw|TURKIYE TÜRKIYE TURKİYE|) {
+				$member = 'TÜRKİYE'
+			}
 			
 			if ($member) {
 				if (my $field = first {$_->get_value('c') eq $members->codes->{$member}} $record->get_fields('967')) {
@@ -562,6 +573,8 @@ sub convert {
 		$_996->set_sub('f',sum(values %results));
 		$record->add_field($_996);
 	}
+
+	$record->add_field(MARC::Field->new(tag => '989')->set_sub('a', 'Voting Data'));
 	
 	print {$ofh} $record->to_mrk;
 	say $record->to_mrk;
