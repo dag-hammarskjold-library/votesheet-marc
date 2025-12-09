@@ -357,10 +357,7 @@ sub MAIN {
 		say qq|\nOK. processing "$file"\n|;
 		#system qq|start "C:\\Program Files (x86)\\Google\\Chrome\\Application" "$file"|;
 	
-		print "Please enter the resolution symbol: ";
-		my $symbol = <STDIN>;
-		chomp $symbol;
-		
+		my $symbol = 'A/RES/xxx';
 		convert($file,$symbol,$ofh);
 		
 		if (@paths > 0) {
