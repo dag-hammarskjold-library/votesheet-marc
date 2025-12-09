@@ -502,7 +502,7 @@ sub convert {
 			my $member = $members->short_names->{$short_name};
 
 			# The characters for Turkiye may vary
-			if (! $member && grep {$text} qw|TURKIYE TÜRKIYE TURKİYE|) {
+			if (! $member && grep {$text =~ /$_/} qw|TURKIYE TÜRKIYE TURKİYE|) {
 				$member = 'TÜRKİYE'
 			}
 			
