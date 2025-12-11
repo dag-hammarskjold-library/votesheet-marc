@@ -25,4 +25,4 @@ Install the dependencies using the `cpanm` Perl package installer (included with
 perl run.pl file1.pdf file2.pdf
 ```
 
-For each file path provided to the script, the user will be prompted to manually enter the resolution symbol for the vote in the file. The user is able to review the results on the screen, to compare with the data in the PDF if they wish. When all the files have been processed, one MARC file (.mrc or .mrk) is produced containing the MARC data for all the files prcossed as a batch for import. 
+For each file path provided to the script, the user is able to review the results on the screen, to compare with the data in the PDF if they wish. A default resolution symbol of "A/RES/xxx" is automatically assigned to each vote. When all the files have been processed, one MARC file (.mrc or .mrk) is produced containing the MARC data for all the files prcossed as a batch for import. 
