@@ -11,7 +11,7 @@ Mac/Linux:
 * Built-in Perl installation should be sufficient.
 
 #### Installation:
-> `git clone https://github.com/dag-hammarskjold-library/votesheet-marc`
+> `git clone https://github.com/dag-hammarskjold-library/votesheet-marc --branch v1.1
 
 Change directory into the repository.
 > `cd votesheet-marc`
